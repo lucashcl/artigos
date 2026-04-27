@@ -1,0 +1,61 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "summaries",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-04-23",
+	"d1_databases": [
+		{
+			"binding": "summaries_db",
+			"database_name": "summaries-db",
+			"database_id": "825ee59e-be07-4b41-8079-9673153407a7"
+		}
+	],
+	"queues": {
+		"consumers": [
+			{
+				"queue": "summaries-queue"
+			}
+		],
+		"producers": [
+			{
+				"queue": "summaries-queue",
+				"binding": "summaries_queue"
+			}
+		]
+	},
+	// "compatibility_flags": [
+	//   "nodejs_compat"
+	// ],
+	// "kv_namespaces": [
+	//   {
+	//     "binding": "MY_KV_NAMESPACE",
+	//     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	//   }
+	// ],
+	// "r2_buckets": [
+	//   {
+	//     "binding": "MY_BUCKET",
+	//     "bucket_name": "my-bucket"
+	//   }
+	// ],
+	// "d1_databases": [
+	//   {
+	//     "binding": "MY_DB",
+	//     "database_name": "my-database",
+	//     "database_id": ""
+	//   }
+	// ],
+	// "ai": {
+	//   "binding": "AI"
+	// },
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+		},
+		"traces": {
+			"enabled": true
+		},
+		"head_sampling_rate": 1
+	},
+}

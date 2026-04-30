@@ -7,7 +7,6 @@ import { secureHeaders } from 'hono/secure-headers'
 import { logger } from 'hono/logger'
 import { timeout } from 'hono/timeout'
 import { queue } from './queue'
-import { Bindings } from './env'
 
 type Summary = {
   id: string
@@ -25,7 +24,7 @@ type QueueItem = {
   created_at: string
 }
 
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 app.use(
   cors({ origin: '*' }),

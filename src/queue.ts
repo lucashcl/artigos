@@ -1,8 +1,7 @@
 import { generateSummary } from "./ai"
-import { Bindings } from "./env"
 import { extractPdfText } from "./pdf"
 
-export async function queue(batch: MessageBatch<{ id: string, url: string }>, env: Bindings) {
+export async function queue(batch: MessageBatch<{ id: string, url: string }>, env: CloudflareBindings) {
    for (const message of batch.messages) {
       console.log(`Processing queue item: ${message.body.id} - ${message.body.url}`)
       const { id, url } = message.body
@@ -59,7 +58,10 @@ export async function queue(batch: MessageBatch<{ id: string, url: string }>, en
 
          const buffer = await res.arrayBuffer()
          const text = await extractPdfText(buffer)
-         const summary = await generateSummary(text, env.OPENAI_API_KEY)
+         const summary = await generateSummary(text, {
+            apiKey: env.OPENROUTER_API_KEY,
+            model: env.OPENROUTER_MODEL
+         })
 
          const tagsJson = JSON.stringify(summary.tags)
 

@@ -1,26 +1,26 @@
 import { generateText, Output } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from "zod";
 
 const articleSchema = z.object({
    titulo: z.string().min(1),
-   resumo: z.string().min(1).max(1000),
+   resumo: z.string().min(1).max(2000),
    tags: z.array(z.string().min(1)).min(1).max(8)
 });
 
-const openai = (model: string, apiKey: string) => createOpenAI({
+const openrouter = (model: string, apiKey: string) => createOpenRouter({
    apiKey
-})(model);
+}).chat(model);
 
-export const generateSummary = async (text: string, apiKey: string) => {
+export const generateSummary = async (text: string, { model, apiKey }: { model: string; apiKey: string }) => {
    const result = await generateText({
-      model: openai("gpt-5.4-nano", apiKey),
+      model: openrouter(model, apiKey),
       output: Output.object({ schema: articleSchema }),
       prompt: [
          "Extraia um objeto estruturado do artigo em PDF.",
          "Retorne os campos: titulo, resumo e tags.",
          "Extraia o titulo do artigo",
-         "No resumo, mantenha os pontos principais em ate 1000 caracteres.",
+         "Gere um resumo no formato markdown",
          "As tags devem ser relevantes e em portugues.",
          "Conteudo:",
          text

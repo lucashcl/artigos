@@ -9,7 +9,8 @@ const articleSchema = z.object({
 });
 
 const openrouter = (model: string, apiKey: string) => createOpenRouter({
-   apiKey
+   apiKey,
+   appName: "CLOUDFLARE_SUMMARIES"
 }).chat(model);
 
 export const generateSummary = async (text: string, { model, apiKey }: { model: string; apiKey: string }) => {

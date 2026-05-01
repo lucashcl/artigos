@@ -10,6 +10,6 @@ export type Summary = {
 export type QueueItem = {
    id: string
    url: string
-   status: string
+   status: "pending" | "processing" | "completed" | "failed"
    created_at: string
 }

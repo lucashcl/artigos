@@ -66,7 +66,7 @@ api.get("/summaries/:id", async (c) => {
          SELECT q.id, q.url, q.status, s.title, s.summary, s.tags, q.updated_at, q.created_at
          FROM queue_items q
          LEFT JOIN summaries s ON q.id = s.id
-         WHERE s.id = ?
+         WHERE q.id = ?
          LIMIT 1
       `,
       )

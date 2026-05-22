@@ -27,6 +27,54 @@ const createSummarySchema = z.object({
    url: z.url()
 })
 
+// GET /summaries - List all summaries
+api.get('/summaries', async (c) => {
+   const { results } = await c.env.summaries_db.prepare(
+      `SELECT s.id, q.url, s.title, s.summary, s.tags, s.created_at
+     FROM summaries s
+      INNER JOIN queue_items q ON q.id = s.id
+     ORDER BY s.created_at DESC`
+   ).all<Summary>()
+
+   return c.json(
+      results.map((row) => ({
+         id: row.id,
+         url: row.url,
+         title: row.title,
+         summary: row.summary,
+         tags: JSON.parse(row.tags),
+         created_at: row.created_at,
+      }))
+   )
+})
+
+// GET /summaries/:id - Get a summary by ID
+api.get('/summaries/:id', async (c) => {
+   const id = c.req.param('id')
+
+   const row = await c.env.summaries_db.prepare(
+      `SELECT s.id, q.url, s.title, s.summary, s.tags, s.created_at
+     FROM summaries s
+      INNER JOIN queue_items q ON q.id = s.id
+      WHERE s.id = ?`
+   )
+      .bind(id)
+      .first<Summary>()
+
+   if (!row) {
+      return c.json({ error: 'Summary not found' }, 404)
+   }
+
+   return c.json({
+      id: row.id,
+      url: row.url,
+      title: row.title,
+      summary: row.summary,
+      tags: JSON.parse(row.tags),
+      created_at: row.created_at,
+   })
+})
+
 // POST /summaries - Create a new summary
 api.post('/summaries', zValidator('json', createSummarySchema), async (c) => {
    const { url } = c.req.valid('json')
@@ -64,50 +112,34 @@ api.post('/summaries', zValidator('json', createSummarySchema), async (c) => {
    }
 })
 
-// GET /summaries/:id - Get a summary by ID
-api.get('/summaries/:id', async (c) => {
+// POST /summaries/retry - Retry a failed summary
+api.post('/summaries/:id/retry', async (c) => {
    const id = c.req.param('id')
-
-   const row = await c.env.summaries_db.prepare(
-      `SELECT s.id, q.url, s.title, s.summary, s.tags, s.created_at
-     FROM summaries s
-      INNER JOIN queue_items q ON q.id = s.id
-      WHERE s.id = ?`
+   const existing = await c.env.summaries_db.prepare(
+      `SELECT id, url, status, created_at FROM queue_items WHERE id = ?`
    )
       .bind(id)
-      .first<Summary>()
+      .first<QueueItem>()
 
-   if (!row) {
-      return c.json({ error: 'Summary not found' }, 404)
+   if (!existing) {
+      return c.json({ error: 'Queue item not found' }, 404)
+   }
+   if (existing.status !== 'failed') {
+      return c.json({ error: 'Only failed items can be retried' }, 400)
    }
 
-   return c.json({
-      id: row.id,
-      url: row.url,
-      title: row.title,
-      summary: row.summary,
-      tags: JSON.parse(row.tags),
-      created_at: row.created_at,
-   })
-})
-
-// GET /summaries - List all summaries
-api.get('/summaries', async (c) => {
-   const { results } = await c.env.summaries_db.prepare(
-      `SELECT s.id, q.url, s.title, s.summary, s.tags, s.created_at
-     FROM summaries s
-      INNER JOIN queue_items q ON q.id = s.id
-     ORDER BY s.created_at DESC`
-   ).all<Summary>()
-
-   return c.json(
-      results.map((row) => ({
-         id: row.id,
-         url: row.url,
-         title: row.title,
-         summary: row.summary,
-         tags: JSON.parse(row.tags),
-         created_at: row.created_at,
-      }))
+   // Update status to pending and resend to queue
+   await c.env.summaries_db.prepare(
+      `UPDATE queue_items SET status = 'pending' WHERE id = ?`
    )
+      .bind(id)
+      .run()
+
+   await c.env.summaries_queue.send({ id, url: existing.url })
+   const queueItem = await c.env.summaries_db.prepare(
+      `SELECT id, url, status, created_at FROM queue_items WHERE id = ?`
+   )
+      .bind(id)
+      .first<QueueItem>()
+   return c.json(queueItem, 200)
 })

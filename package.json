@@ -8,15 +8,15 @@
     "migrate": "wrangler d1 execute summaries-db --file=./migrations/init.sql"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.53",
-    "@hono/zod-validator": "^0.7.6",
-    "@openrouter/ai-sdk-provider": "^2.8.1",
-    "ai": "^6.0.168",
-    "hono": "^4.12.14",
-    "unpdf": "^1.6.0",
-    "zod": "^4.3.6"
+    "@ai-sdk/openai": "^3.0.112",
+    "@hono/zod-validator": "^0.9.1",
+    "@openrouter/ai-sdk-provider": "^2.10.0",
+    "ai": "^6.0.282",
+    "hono": "^4.13.7",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.131.1"
   }
 }

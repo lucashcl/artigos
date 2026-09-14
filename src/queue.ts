@@ -1,5 +1,5 @@
-import { generateSummary } from "./ai";
-import { extractPdfText } from "./pdf";
+import { generateSummary } from "./lib/ai";
+import { extractPdfText } from "./lib/pdf";
 
 export async function queue(
    batch: MessageBatch<{ id: string; url: string }>,

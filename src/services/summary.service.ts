@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/d1";
 import { and, asc, eq } from "drizzle-orm";
+import { getDb } from "../db/drizzle";
 import { queueItems, summaries } from "../db/schema";
 import { QueueItem, SummaryDAO, SummaryDTO } from "../lib/types";
 import { err, ok, Result } from "../lib/result";
@@ -23,19 +23,7 @@ const mapSummary = (dao: SummaryDAO): SummaryDTO => ({
 export async function listSummaries(
    d1Database: D1Database,
 ): Promise<SummaryDTO[]> {
-   const db = drizzle(d1Database);
-
-   // Implementação anterior com D1:
-   // const { results } = await d1Database
-   //    .prepare(`
-   //       SELECT q.id, q.url, q.status, s.title, s.summary, s.tags, q.updated_at, q.created_at
-   //       FROM queue_items q
-   //       LEFT JOIN summaries s ON q.id = s.id
-   //       ORDER BY q.created_at
-   //    `)
-   //    .all<SummaryDAO>();
-   // return results.map(mapSummary);
-
+   const db = getDb(d1Database);
    const rows = await db
       .select({
          id: queueItems.id,
@@ -58,21 +46,7 @@ export async function getSummaryById(
    d1Database: D1Database,
    id: string,
 ): Promise<SummaryDTO | null> {
-   const db = drizzle(d1Database);
-
-   // Implementação anterior com D1:
-   // const row = await d1Database
-   //    .prepare(`
-   //       SELECT q.id, q.url, q.status, s.title, s.summary, s.tags, q.updated_at, q.created_at
-   //       FROM queue_items q
-   //       LEFT JOIN summaries s ON q.id = s.id
-   //       WHERE q.id = ?
-   //       LIMIT 1
-   //    `)
-   //    .bind(id)
-   //    .first<SummaryDAO>();
-   // return row ? mapSummary(row) : null;
-
+   const db = getDb(d1Database);
    const [row] = await db
       .select({
          id: queueItems.id,
@@ -102,27 +76,10 @@ export async function createSummary(
    queue: Queue,
    url: string,
 ): Promise<Result<CreateSummaryResult, "failed">> {
-   const db = drizzle(d1Database);
+   const db = getDb(d1Database);
    const id = crypto.randomUUID();
 
    try {
-      // Implementação anterior com D1:
-      // await d1Database
-      //    .prepare(
-      //       `INSERT INTO queue_items (id, url, status) VALUES (?, ?, 'pending')`,
-      //    )
-      //    .bind(id, url)
-      //    .run();
-      //
-      // await queue.send({ id, url });
-      //
-      // const queueItem = await d1Database
-      //    .prepare(
-      //       `SELECT id, url, status, created_at FROM queue_items WHERE id = ?`,
-      //    )
-      //    .bind(id)
-      //    .first<QueueItem>();
-
       await db
          .insert(queueItems)
          .values({ id, url, status: "pending" })
@@ -147,14 +104,6 @@ export async function createSummary(
 
       return ok({ queueItem, created: true });
    } catch {
-      // Implementação anterior com D1:
-      // const existing = await d1Database
-      //    .prepare(
-      //       `SELECT id, url, status, created_at FROM queue_items WHERE url = ?`,
-      //    )
-      //    .bind(url)
-      //    .first<QueueItem>();
-
       const [existing] = await db
          .select({
             id: queueItems.id,
@@ -179,7 +128,7 @@ export async function retrySummary(
    queue: Queue,
    id: string,
 ): Promise<Result<QueueItem, "not_failed" | "not_found">> {
-   const db = drizzle(d1Database);
+   const db = getDb(d1Database);
 
    const [existing] = await db
       .select({
